@@ -1,0 +1,20 @@
+# Normalise line endings in the repository. Scripts and manifests are executed
+# on Linux (minikube VM, containers), so a CRLF checkout would break them with
+# "bad interpreter: /usr/bin/env bash^M".
+* text=auto eol=lf
+
+*.sh   text eol=lf
+*.py   text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
+*.tf   text eol=lf
+*.ini  text eol=lf
+Makefile     text eol=lf
+Dockerfile   text eol=lf
+*.Dockerfile text eol=lf
+*.json text eol=lf
+*.md   text eol=lf
+
+*.png binary
+*.jpg binary
+*.webp binary
