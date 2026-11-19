@@ -1,0 +1,21 @@
+# Prometheus configuration for the local stack.
+# Docker Compose and Kubernetes both expose the API as the host "api" on :8000.
+global:
+  scrape_interval: 15s
+  scrape_timeout: 10s
+  evaluation_interval: 15s
+  external_labels:
+    stack: interest-rate-mlops
+    environment: local
+
+scrape_configs:
+  - job_name: fastapi
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["api:8000"]
+        labels:
+          service: interest-rate-api
+
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]

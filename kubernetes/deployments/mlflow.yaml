@@ -1,0 +1,101 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mlflow
+  namespace: mlops
+  labels:
+    app.kubernetes.io/name: mlflow
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mlflow
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mlflow
+    spec:
+      initContainers:
+        - name: wait-for-postgres
+          image: interest-rate-api:local
+          imagePullPolicy: IfNotPresent
+          command:
+            - python
+            - -c
+            - |
+              import socket, sys, time
+              for _ in range(60):
+                  try:
+                      socket.create_connection(("postgres", 5432), 2).close()
+                      sys.exit(0)
+                  except OSError:
+                      time.sleep(2)
+              sys.exit(1)
+          resources:
+            requests: { cpu: 50m, memory: 64Mi }
+            limits: { cpu: 200m, memory: 128Mi }
+      containers:
+        - name: mlflow
+          image: interest-rate-api:local
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - >
+              mlflow server
+              --host 0.0.0.0
+              --port 5000
+              --backend-store-uri "$MLFLOW_BACKEND_STORE_URI"
+              --artifacts-destination /mlflow/artifacts
+              --serve-artifacts
+          env:
+            - name: MLFLOW_BACKEND_STORE_URI
+              valueFrom:
+                secretKeyRef: { name: postgres-credentials, key: MLFLOW_BACKEND_STORE_URI }
+            - name: MLFLOW_SERVER_DISABLE_TELEMETRY
+              value: "true"
+          ports:
+            - name: http
+              containerPort: 5000
+          volumeMounts:
+            - name: artifacts
+              mountPath: /mlflow/artifacts
+          readinessProbe:
+            httpGet: { path: /health, port: http }
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 6
+          livenessProbe:
+            httpGet: { path: /health, port: http }
+            initialDelaySeconds: 40
+            periodSeconds: 20
+            failureThreshold: 6
+          resources:
+            requests: { cpu: 200m, memory: 512Mi }
+            limits: { cpu: "1", memory: 1Gi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 1000
+      volumes:
+        - name: artifacts
+          persistentVolumeClaim:
+            claimName: mlops-mlflow-artifacts
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mlflow
+  namespace: mlops
+  labels:
+    app.kubernetes.io/name: mlflow
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: mlflow
+  ports:
+    - name: http
+      port: 5000
+      targetPort: http

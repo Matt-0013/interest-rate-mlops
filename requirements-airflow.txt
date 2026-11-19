@@ -1,0 +1,12 @@
+# ---------------------------------------------------------------------------
+# OPTIONAL: install Airflow locally (outside Docker) for DAG development.
+#
+#   pip install "apache-airflow==2.10.4" \
+#     --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.10.4/constraints-3.12.txt"
+#   pip install -r requirements.txt
+#
+# Airflow is NOT part of requirements.txt: the API, training and CI jobs must
+# not carry the orchestrator's dependency tree. In Docker, Airflow lives in its
+# own image (docker/airflow.Dockerfile).
+# ---------------------------------------------------------------------------
+apache-airflow==2.10.4

@@ -1,0 +1,9 @@
+# Copy to terraform.tfvars (git-ignored) and adjust. Local development only.
+kubeconfig_path = "~/.kube/config"
+kube_context    = "minikube"
+namespace       = "mlops"
+postgres_user   = "mlops"
+postgres_password = "mlops_local_password"
+postgres_db     = "mlops"
+model_name      = "interest_rate_forecaster"
+log_level       = "INFO"

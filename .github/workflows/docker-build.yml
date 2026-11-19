@@ -1,0 +1,73 @@
+name: docker-build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: docker-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-run:
+    name: Build image and start the API container
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate the Compose file
+        run: docker compose config --quiet
+
+      - name: Build the API image
+        run: docker build -f docker/api.Dockerfile -t interest-rate-api:ci .
+
+      - name: Check the image does not run as root
+        run: |
+          user="$(docker run --rm --entrypoint id interest-rate-api:ci -u)"
+          echo "container uid: $user"
+          test "$user" != "0"
+
+      - name: Start the container
+        run: |
+          docker run -d --name api \
+            -p 8000:8000 \
+            -e APP_ENV=ci \
+            -e LOG_FORMAT=console \
+            -e ENABLE_DB_PERSISTENCE=false \
+            -e ENABLE_DVC=false \
+            interest-rate-api:ci
+
+      - name: Wait for health
+        run: |
+          for i in $(seq 1 45); do
+            if curl -fsS http://localhost:8000/health >/dev/null 2>&1; then
+              echo "healthy after ${i}s"
+              curl -s http://localhost:8000/health
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "container did not become healthy"
+          docker logs api
+          exit 1
+
+      - name: Probe non-database endpoints
+        run: |
+          set -euo pipefail
+          curl -fsS http://localhost:8000/openapi.json -o openapi.json
+          python -c "import json;d=json.load(open('openapi.json'));print(len(d['paths']),'paths')"
+          curl -fsS http://localhost:8000/metrics | head -5
+          curl -fsS http://localhost:8000/model/info || true
+          curl -fsS http://localhost:8000/drift/status || true
+
+      - name: Container logs
+        if: always()
+        run: docker logs api
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker rm -f api || true

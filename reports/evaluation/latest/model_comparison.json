@@ -1,0 +1,268 @@
+{
+  "dataset": {
+    "dvc_hash": null,
+    "git_commit": null,
+    "name": "federal_reserve_interest_rates",
+    "version": "sha256:091410052c81"
+  },
+  "evaluation_date": "20261118T073605Z",
+  "features": {
+    "end": "2017-01-01",
+    "feature_names": [
+      "lag_1",
+      "lag_2",
+      "lag_3",
+      "lag_6",
+      "lag_12",
+      "roll_mean_3",
+      "roll_std_3",
+      "roll_mean_6",
+      "roll_std_6",
+      "roll_mean_12",
+      "roll_std_12",
+      "diff_1",
+      "diff_12"
+    ],
+    "horizon": 1,
+    "n_samples": 697,
+    "start": "1959-01-01",
+    "target": "effective_federal_funds_rate"
+  },
+  "models": [
+    {
+      "cv_folds": [
+        {
+          "mae": 0.4920204974987614,
+          "mape": 8.519934867823283,
+          "mape_coverage_pct": 100.0,
+          "mean_actual": 6.481397849462364,
+          "n_samples": 93.0,
+          "rmse": 0.6405013622504883
+        },
+        {
+          "mae": 0.7313216708105339,
+          "mape": 6.4092851339737615,
+          "mape_coverage_pct": 100.0,
+          "mean_actual": 9.593548387096774,
+          "n_samples": 93.0,
+          "rmse": 1.3115150994721376
+        },
+        {
+          "mae": 0.3294210505043279,
+          "mape": 3.824403348999344,
+          "mape_coverage_pct": 100.0,
+          "mean_actual": 8.490645161290322,
+          "n_samples": 93.0,
+          "rmse": 0.47911810064172144
+        },
+        {
+          "mae": 0.15269054144591968,
+          "mape": 3.325457634215972,
+          "mape_coverage_pct": 100.0,
+          "mean_actual": 5.09978494623656,
+          "n_samples": 93.0,
+          "rmse": 0.19724764774609818
+        },
+        {
+          "mae": 0.1424760450213055,
+          "mape": 6.391765837806457,
+          "mape_coverage_pct": 100.0,
+          "mean_actual": 3.5010752688172047,
+          "n_samples": 93.0,
+          "rmse": 0.19256145352003254
+        }
+      ],
+      "cv_mae_mean": 0.369586,
+      "cv_rmse_mean": 0.564189,
+      "cv_rmse_std": 0.459432,
+      "cv_rmse_std_ratio": 0.814323,
+      "hyperparameters": {
+        "fit_intercept": true
+      },
+      "model_name": "linear_regression",
+      "model_type": "linear_regression",
+      "n_test": 139,
+      "n_train": 558,
+      "predict_duration_seconds": 0.0006,
+      "test_mae": 0.112504,
+      "test_mape": 6.291619,
+      "test_mape_coverage_pct": 30.22,
+      "test_rmse": 0.158476,
+      "train_duration_seconds": 0.0009
+    },
+    {
+      "cv_folds": [
+        {
+          "mae": 1.7268051628807273,
+          "mape": 21.91705396391188,
+          "mape_coverage_pct": 100.0,
+          "mean_actual": 6.481397849462364,
+          "n_samples": 93.0,
+          "rmse": 2.4889855692541794
+        },
+        {
+          "mae": 1.5559581956792718,
+          "mape": 11.689229091228132,
+          "mape_coverage_pct": 100.0,
+          "mean_actual": 9.593548387096774,
+          "n_samples": 93.0,
+          "rmse": 2.673657437035105
+        },
+        {
+          "mae": 0.371579620139039,
+          "mape": 4.2024740159351515,
+          "mape_coverage_pct": 100.0,
+          "mean_actual": 8.490645161290322,
+          "n_samples": 93.0,
+          "rmse": 0.5968204526498936
+        },
+        {
+          "mae": 0.16299291961853712,
+          "mape": 3.5272504512716187,
+          "mape_coverage_pct": 100.0,
+          "mean_actual": 5.09978494623656,
+          "n_samples": 93.0,
+          "rmse": 0.19687211722638148
+        },
+        {
+          "mae": 0.47611647074607416,
+          "mape": 34.04197053810976,
+          "mape_coverage_pct": 100.0,
+          "mean_actual": 3.5010752688172047,
+          "n_samples": 93.0,
+          "rmse": 0.6764093967273939
+        }
+      ],
+      "cv_mae_mean": 0.85869,
+      "cv_rmse_mean": 1.326549,
+      "cv_rmse_std": 1.161606,
+      "cv_rmse_std_ratio": 0.87566,
+      "hyperparameters": {
+        "max_depth": 8,
+        "min_samples_leaf": 2,
+        "min_samples_split": 5,
+        "n_estimators": 300,
+        "n_jobs": -1,
+        "random_state": 42
+      },
+      "model_name": "random_forest",
+      "model_type": "random_forest",
+      "n_test": 139,
+      "n_train": 558,
+      "predict_duration_seconds": 0.0403,
+      "test_mae": 0.724308,
+      "test_mape": 12.049758,
+      "test_mape_coverage_pct": 30.22,
+      "test_rmse": 0.809323,
+      "train_duration_seconds": 0.3972
+    },
+    {
+      "cv_folds": [
+        {
+          "mae": 1.6338881557218488,
+          "mape": 20.04505418021256,
+          "mape_coverage_pct": 100.0,
+          "mean_actual": 6.481397849462364,
+          "n_samples": 93.0,
+          "rmse": 2.4284254570073576
+        },
+        {
+          "mae": 1.3454623948374103,
+          "mape": 10.67292065892233,
+          "mape_coverage_pct": 100.0,
+          "mean_actual": 9.593548387096774,
+          "n_samples": 93.0,
+          "rmse": 2.232196694798298
+        },
+        {
+          "mae": 0.4161654882533576,
+          "mape": 4.749286200545972,
+          "mape_coverage_pct": 100.0,
+          "mean_actual": 8.490645161290322,
+          "n_samples": 93.0,
+          "rmse": 0.5945528038780482
+        },
+        {
+          "mae": 0.16619125909702745,
+          "mape": 3.5995156758228988,
+          "mape_coverage_pct": 100.0,
+          "mean_actual": 5.09978494623656,
+          "n_samples": 93.0,
+          "rmse": 0.20840374720621754
+        },
+        {
+          "mae": 0.4008172606909147,
+          "mape": 28.177910250410143,
+          "mape_coverage_pct": 100.0,
+          "mean_actual": 3.5010752688172047,
+          "n_samples": 93.0,
+          "rmse": 0.5780282545125959
+        }
+      ],
+      "cv_mae_mean": 0.792505,
+      "cv_rmse_mean": 1.208321,
+      "cv_rmse_std": 1.038122,
+      "cv_rmse_std_ratio": 0.859144,
+      "hyperparameters": {
+        "colsample_bytree": 0.9,
+        "learning_rate": 0.05,
+        "max_depth": 4,
+        "min_child_weight": 1,
+        "n_estimators": 400,
+        "n_jobs": 4,
+        "objective": "reg:squarederror",
+        "random_state": 42,
+        "reg_lambda": 1.0,
+        "subsample": 0.9,
+        "tree_method": "hist"
+      },
+      "model_name": "xgboost",
+      "model_type": "xgboost",
+      "n_test": 139,
+      "n_train": 558,
+      "predict_duration_seconds": 0.0075,
+      "test_mae": 0.830348,
+      "test_mape": 15.377164,
+      "test_mape_coverage_pct": 30.22,
+      "test_rmse": 0.936864,
+      "train_duration_seconds": 0.2087
+    }
+  ],
+  "notes": [
+    "MAE and RMSE are in percentage points and are the primary metrics.",
+    "MAPE excludes observations with |actual| < 0.5 pp; coverage is reported.",
+    "The test block is the final chronological 20% and is never used for fitting."
+  ],
+  "ranking": [
+    "linear_regression",
+    "xgboost",
+    "random_forest"
+  ],
+  "report_version": 1,
+  "selection": {
+    "minimize": true,
+    "primary_metric": "cv_rmse",
+    "rule": "lowest mean walk-forward CV RMSE on the training block; the held-out test block is reported for every model but never used to pick the winner",
+    "secondary_metric": "cv_mae",
+    "selected_model": "linear_regression"
+  },
+  "split": {
+    "n_test": 139,
+    "n_train": 558,
+    "test_end": "2017-01-01",
+    "test_start": "2005-07-01",
+    "train_end": "2005-06-01",
+    "train_start": "1959-01-01"
+  },
+  "target": {
+    "frequency": "monthly",
+    "horizon_observations": 1,
+    "name": "effective_federal_funds_rate",
+    "unit": "percent per annum"
+  },
+  "validation": {
+    "held_out_from_selection": true,
+    "n_splits": 5,
+    "strategy": "expanding_window"
+  }
+}

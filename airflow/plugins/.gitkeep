@@ -1,0 +1,2 @@
+# Airflow plugins live here. The project needs no custom operators: the DAGs
+# call the same pipeline functions as the CLI and the CI jobs.

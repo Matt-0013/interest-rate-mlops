@@ -1,0 +1,4 @@
+model_name,model_type,test_mae,test_rmse,test_mape,test_mape_coverage_pct,cv_rmse_mean,cv_mae_mean,cv_rmse_std,train_duration_seconds,n_train,n_test
+linear_regression,linear_regression,0.112504,0.158476,6.291619,30.22,0.564189,0.369586,0.459432,0.0009,558,139
+random_forest,random_forest,0.724308,0.809323,12.049758,30.22,1.326549,0.85869,1.161606,0.3972,558,139
+xgboost,xgboost,0.830348,0.936864,15.377164,30.22,1.208321,0.792505,1.038122,0.2087,558,139

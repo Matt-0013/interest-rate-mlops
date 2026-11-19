@@ -1,0 +1,63 @@
+# --- Secrets / local config -------------------------------------------------
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# --- Python -----------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+
+# --- Testing / quality ------------------------------------------------------
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# --- Notebooks --------------------------------------------------------------
+.ipynb_checkpoints/
+
+# --- MLflow -----------------------------------------------------------------
+mlruns/
+mlartifacts/
+mlflow.db
+
+# --- DVC (data itself is tracked with .dvc pointers, never in Git) ----------
+/data/**
+!/data/**/
+!/data/**/.gitkeep
+!/data/**/*.dvc
+.dvc/tmp/
+.dvc/cache/
+.dvc/plots/
+dvc-storage/
+artifacts/
+
+# --- Reports (generated HTML/PNG monitoring + evaluation output) ------------
+# Only the canonical latest run is committed; timestamped runs are regenerated.
+/reports/evaluation/2*/
+/reports/eda/*.png
+/reports/data_quality/2*/
+/reports/monitoring/*
+/reports/promotion/promotion_2*.json
+/reports/state/
+
+# --- Local deployment artifacts --------------------------------------------
+kubernetes/.generated/
+.terraform/
+*.tfstate
+*.tfstate.*
+terraform.tfvars
+*.db
+local_e2e.db
+openapi.json

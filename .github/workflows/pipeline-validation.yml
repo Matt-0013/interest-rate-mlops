@@ -1,0 +1,113 @@
+name: pipeline-validation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: pipeline-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pipeline:
+    name: Ingest, train, register, promote, monitor
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      APP_ENV: ci
+      LOG_FORMAT: console
+      ENABLE_DVC: "false"
+      ENABLE_DB_PERSISTENCE: "false"
+      MLFLOW_TRACKING_URI: sqlite:///mlruns/mlflow.db
+      MPLBACKEND: Agg
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e . --no-deps
+
+      - name: Generate a synthetic dataset (never the real one, never committed)
+        run: |
+          python scripts/make_test_fixture.py \
+            --output data/raw/federal_reserve_interest_rates/index.csv --force
+
+      - name: Ingest and validate
+        run: python scripts/run_pipeline.py --stage ingest --no-db
+
+      - name: Train the three models and register the candidate
+        run: python scripts/run_pipeline.py --stage train --no-db
+
+      - name: Apply promotion gates
+        run: python scripts/run_pipeline.py --stage promote --no-db
+
+      - name: Run drift and performance monitoring
+        run: python scripts/run_pipeline.py --stage monitor --no-db
+
+      - name: Verify artifacts, metrics and registry state
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          from interest_rate_mlops.config import load_pipeline_config
+          from mlflow.tracking import MlflowClient
+
+          panel = Path("data/processed/panel.parquet")
+          features = Path("data/processed/features.parquet")
+          comparison_path = Path("reports/evaluation/latest/model_comparison.json")
+          drift_path = Path("reports/drift_status.json")
+
+          for path in (panel, features, comparison_path, drift_path):
+              assert path.exists(), f"missing artifact: {path}"
+
+          comparison = json.loads(comparison_path.read_text())
+          models = {entry["model_name"] for entry in comparison["models"]}
+          assert models == {"linear_regression", "random_forest", "xgboost"}, models
+          assert comparison["selection"]["selected_model"] in models
+          for entry in comparison["models"]:
+              assert entry["test_rmse"] and entry["test_rmse"] > 0, entry
+              assert entry["test_mae"] and entry["test_mae"] > 0, entry
+
+          # MAPE is either a real number or explicitly null - never a fake 0.
+          assert all(entry["test_mape"] is None or entry["test_mape"] > 0 for entry in comparison["models"])
+
+          drift = json.loads(drift_path.read_text())
+          assert drift["status"] in {"ok", "warning", "critical"}, drift["status"]
+
+          cfg = load_pipeline_config()
+          client = MlflowClient()
+          champion = client.get_model_version_by_alias(cfg.mlflow.registered_model_name, "champion")
+          assert champion.version, "champion alias not set"
+          print(
+              f"pipeline OK: {len(models)} models, best={comparison['selection']['selected_model']}, "
+              f"champion=v{champion.version}, drift={drift['status']}"
+          )
+          PY
+
+      - name: Show the model comparison
+        if: always()
+        run: |
+          test -f reports/evaluation/latest/model_comparison.md \
+            && cat reports/evaluation/latest/model_comparison.md || true
+
+      - name: Upload evaluation artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-comparison
+          path: |
+            reports/evaluation/latest/
+            reports/drift_status.json
+          if-no-files-found: warn
+          retention-days: 7

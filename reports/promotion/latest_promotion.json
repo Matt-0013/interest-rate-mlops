@@ -1,0 +1,58 @@
+{
+  "approved": false,
+  "candidate_metrics": {
+    "cv_mae_mean": 0.3695859610561697,
+    "cv_mape_mean": 5.694169364563764,
+    "cv_rmse_mean": 0.5641887327260956,
+    "cv_rmse_std": 0.4594316931814785,
+    "cv_rmse_std_ratio": 0.8143227018404939,
+    "predict_duration_seconds": 0.0006947999936528504,
+    "test_mae": 0.1125038669438136,
+    "test_mape": 6.291618619177471,
+    "test_mape_coverage_pct": 30.22,
+    "test_rmse": 0.1584757099118513,
+    "train_duration_seconds": 0.003734299971256405
+  },
+  "candidate_version": "2",
+  "champion_metrics": {
+    "cv_mae_mean": 0.3695859610561697,
+    "cv_mape_mean": 5.694169364563764,
+    "cv_rmse_mean": 0.5641887327260956,
+    "cv_rmse_std": 0.4594316931814785,
+    "cv_rmse_std_ratio": 0.8143227018404939,
+    "predict_duration_seconds": 0.0005244000349193811,
+    "test_mae": 0.1125038669438136,
+    "test_mape": 6.291618619177471,
+    "test_mape_coverage_pct": 30.22,
+    "test_rmse": 0.1584757099118513,
+    "train_duration_seconds": 0.0008804999524727464
+  },
+  "champion_version": "1",
+  "gates": [
+    {
+      "detail": "test RMSE 0.1585 <= 0.75",
+      "name": "absolute_quality",
+      "passed": true
+    },
+    {
+      "detail": "test MAPE 6.29% <= 25.0%",
+      "name": "mape_sanity",
+      "passed": true
+    },
+    {
+      "detail": "fold RMSE std/mean 0.8143 <= 1.0",
+      "name": "cv_stability",
+      "passed": true
+    },
+    {
+      "detail": "RMSE improvement 0.00% < 2.0% vs champion (champion 0.1585, candidate 0.1585)",
+      "name": "beats_champion",
+      "passed": false
+    }
+  ],
+  "improvement_pct": 0.0,
+  "reasons": [
+    "candidate does not beat the champion by 2.0% (improvement 0.0%)"
+  ],
+  "summary": "REJECTED: absolute_quality=pass; mape_sanity=pass; cv_stability=pass; beats_champion=fail"
+}

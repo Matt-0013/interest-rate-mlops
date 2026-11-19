@@ -1,0 +1,80 @@
+# ---------------------------------------------------------------------------
+# Dataset + ingestion configuration.
+#
+# Everything here is verified against the actual raw file
+# (data/raw/federal_reserve_interest_rates/index.csv, Kaggle
+# federalreserve/interest-rates, 904 rows, 10 columns, 1954-07-01..2017-03-16).
+# See docs/dataset.md for the full data-quality report.
+# ---------------------------------------------------------------------------
+dataset:
+  name: federal_reserve_interest_rates
+
+  # kaggle | local_file | fred
+  # `local_file` consumes whatever CSV is already in raw_dir, so the dataset can
+  # be replaced without touching code. `fred` pulls an official FRED series.
+  source: kaggle
+  kaggle_dataset: federalreserve/interest-rates
+  fred_series: []
+  raw_dir: data/raw/federal_reserve_interest_rates
+  raw_filename: index.csv
+  processed_dir: data/processed
+
+  # The raw file stores the date as three integer columns; no single date column.
+  date_columns: [Year, Month, Day]
+
+  target:
+    column: Effective Federal Funds Rate
+    slug: effective_federal_funds_rate
+    unit: percent per annum
+    frequency: monthly
+    horizon: 1
+
+  # Extra series kept in the modelling panel. `enabled: false` means they are
+  # carried through for monitoring/EDA and future multivariate experiments but
+  # are NOT used as model features (documented decision, see README).
+  exogenous:
+    - column: Unemployment Rate
+      slug: unemployment_rate
+      frequency: monthly
+      asof_fill: last_known
+      enabled: false
+    - column: Inflation Rate
+      slug: inflation_rate
+      frequency: monthly
+      asof_fill: last_known
+      enabled: false
+    - column: Real GDP (Percent Change)
+      slug: real_gdp_pct_change
+      frequency: quarterly
+      asof_fill: last_known
+      enabled: false
+
+  panel:
+    # Inflation data starts 1958-01, so the modelling panel starts there.
+    # Set to null to keep the full target history (1954-07).
+    start: 1958-01-01
+    end: null
+    anchor: month_start
+    # 151 rows in the raw file are FOMC-style intra-month rows that only carry a
+    # target-rate value. They are not monthly observations and are dropped.
+    drop_intra_period_rows: true
+    require_contiguous_target: true
+
+  validation:
+    required_columns:
+      - Year
+      - Month
+      - Day
+      - Federal Funds Target Rate
+      - Federal Funds Upper Target
+      - Federal Funds Lower Target
+      - Effective Federal Funds Rate
+      - Real GDP (Percent Change)
+      - Unemployment Rate
+      - Inflation Rate
+    duplicate_key: [Year, Month, Day]
+    # Plausibility gate: the effective fed funds rate has never left this band.
+    allowed_target_range: [0.0, 25.0]
+    max_missing_fraction: 0.95       # informational for sparse raw series
+    max_missing_fraction_target: 0.01
+    outlier_iqr_factor: 3.0

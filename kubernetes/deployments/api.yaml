@@ -1,0 +1,93 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: mlops
+  labels:
+    app.kubernetes.io/name: api
+spec:
+  # One replica: the data/reports volumes are ReadWriteOnce. A production
+  # deployment would use RWX storage or an object store and scale horizontally.
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: api
+    spec:
+      initContainers:
+        - name: wait-for-dependencies
+          image: interest-rate-api:local
+          imagePullPolicy: IfNotPresent
+          command:
+            - python
+            - -c
+            - |
+              import socket, sys, time
+              targets = [("postgres", 5432), ("mlflow", 5000)]
+              for host, port in targets:
+                  for _ in range(60):
+                      try:
+                          socket.create_connection((host, port), 2).close()
+                          break
+                      except OSError:
+                          time.sleep(2)
+                  else:
+                      sys.exit(f"{host}:{port} not reachable")
+              sys.exit(0)
+          resources:
+            requests: { cpu: 50m, memory: 64Mi }
+            limits: { cpu: 200m, memory: 128Mi }
+      containers:
+        - name: api
+          image: interest-rate-api:local
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - alembic upgrade head && uvicorn api.main:app --host 0.0.0.0 --port 8000
+          envFrom:
+            - configMapRef: { name: api-config }
+            - secretRef: { name: postgres-credentials }
+          ports:
+            - name: http
+              containerPort: 8000
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+              readOnly: true
+            - name: reports
+              mountPath: /app/reports
+              readOnly: true
+          readinessProbe:
+            httpGet: { path: /health, port: http }
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 6
+          livenessProbe:
+            httpGet: { path: /health, port: http }
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            requests: { cpu: 200m, memory: 512Mi }
+            limits: { cpu: "1", memory: 1Gi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 1000
+            capabilities:
+              drop: ["ALL"]
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: mlops-data
+        - name: reports
+          persistentVolumeClaim:
+            claimName: mlops-reports

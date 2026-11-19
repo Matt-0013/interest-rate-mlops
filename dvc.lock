@@ -1,0 +1,86 @@
+schema: '2.0'
+stages:
+  ingest:
+    cmd: python scripts/run_pipeline.py --stage ingest --no-db
+    deps:
+    - path: configs/data.yaml
+      hash: md5
+      md5: fdf41ad8b755a9ce10b1da7ed5624172
+      size: 2838
+    - path: data/raw/federal_reserve_interest_rates/index.csv
+      hash: md5
+      md5: 54b67c990f597183d834a4fd116cd4d6
+      size: 26464
+    - path: scripts/run_pipeline.py
+      hash: md5
+      md5: f8d0fb18e022a65d9a40eb3d92d2404a
+      size: 2526
+    - path: src/interest_rate_mlops/ingestion
+      hash: md5
+      md5: d8a9155cc119f9581d8e7eb2dc64b4fa.dir
+      size: 36103
+      nfiles: 6
+    - path: src/interest_rate_mlops/preprocessing
+      hash: md5
+      md5: e61c0e6ff94b2eb2a48a60436c2f8fb5.dir
+      size: 25502
+      nfiles: 4
+    - path: src/interest_rate_mlops/validation
+      hash: md5
+      md5: 866530d854a395b2c2046f3aabe40ea7.dir
+      size: 33645
+      nfiles: 6
+    outs:
+    - path: data/processed/panel.parquet
+      hash: md5
+      md5: 045327876b4630993b225413096b270d
+      size: 16965
+  train:
+    cmd: python scripts/run_pipeline.py --stage train --no-db
+    deps:
+    - path: configs/model.yaml
+      hash: md5
+      md5: 8a6369696593525a46eca1532584bd7e
+      size: 2720
+    - path: data/processed/panel.parquet
+      hash: md5
+      md5: 045327876b4630993b225413096b270d
+      size: 16965
+    - path: scripts/run_pipeline.py
+      hash: md5
+      md5: f8d0fb18e022a65d9a40eb3d92d2404a
+      size: 2526
+    - path: src/interest_rate_mlops/evaluation
+      hash: md5
+      md5: 9bd78041aeb412cbebcdfd7184504401.dir
+      size: 39834
+      nfiles: 8
+    - path: src/interest_rate_mlops/features
+      hash: md5
+      md5: a68a9d251dffaf222c527954e3214cf7.dir
+      size: 35171
+      nfiles: 6
+    - path: src/interest_rate_mlops/models
+      hash: md5
+      md5: 794501cb2f97ff5add6e3019e7e2e8d4.dir
+      size: 5228
+      nfiles: 4
+    - path: src/interest_rate_mlops/registry
+      hash: md5
+      md5: 25bfecf7ff9d81486d20bf43aa7a5ee7.dir
+      size: 56798
+      nfiles: 10
+    - path: src/interest_rate_mlops/training
+      hash: md5
+      md5: aa51b36ccd348b10cc9e3b0e12368697.dir
+      size: 40811
+      nfiles: 6
+    outs:
+    - path: data/processed/features.parquet
+      hash: md5
+      md5: aebd8f2de0616d20f3339cf14db12cc0
+      size: 77709
+    - path: reports/evaluation/latest/model_comparison.json
+      hash: md5
+      md5: 9f73e9c844cb36e5cceaf701cb8c29f6
+      size: 7780

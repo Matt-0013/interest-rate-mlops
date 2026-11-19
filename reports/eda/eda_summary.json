@@ -1,0 +1,77 @@
+{
+  "dataset_version": "sha256:091410052c81",
+  "figures": {
+    "autocorrelation": "None",
+    "rolling_statistics": "None",
+    "seasonality_by_month": "None",
+    "target_distribution": "None",
+    "target_history": "None"
+  },
+  "intra_period_rows": 151,
+  "raw_rows": 904,
+  "summary": [
+    {
+      "acf_1": 0.9898,
+      "acf_12": 0.8263,
+      "first": "1958-01-01",
+      "last": "2017-02-01",
+      "max": 19.1,
+      "mean": 5.0642,
+      "min": 0.07,
+      "missing": 0,
+      "missing_pct": 0.0,
+      "observations": 710,
+      "series": "effective_federal_funds_rate",
+      "std": 3.6547
+    },
+    {
+      "acf_1": 0.993,
+      "acf_12": 0.7651,
+      "first": "1958-01-01",
+      "last": "2017-02-01",
+      "max": 10.8,
+      "mean": 6.0689,
+      "min": 3.4,
+      "missing": 0,
+      "missing_pct": 0.0,
+      "observations": 710,
+      "series": "unemployment_rate",
+      "std": 1.5614
+    },
+    {
+      "acf_1": 0.9951,
+      "acf_12": 0.8282,
+      "first": "1958-01-01",
+      "last": "2017-02-01",
+      "max": 13.6,
+      "mean": 3.7334,
+      "min": 0.6,
+      "missing": 0,
+      "missing_pct": 0.0,
+      "observations": 710,
+      "series": "inflation_rate",
+      "std": 2.5736
+    },
+    {
+      "acf_1": 0.7799,
+      "acf_12": 0.0722,
+      "first": "1958-01-01",
+      "last": "2017-02-01",
+      "max": 16.5,
+      "mean": 3.1127,
+      "min": -10.0,
+      "missing": 0,
+      "missing_pct": 0.0,
+      "observations": 710,
+      "series": "real_gdp_pct_change",
+      "std": 3.5566
+    }
+  ],
+  "target": "effective_federal_funds_rate",
+  "unit": "percent per annum",
+  "window": {
+    "end": "2017-02-01",
+    "months": 710,
+    "start": "1958-01-01"
+  }
+}

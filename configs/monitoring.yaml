@@ -1,0 +1,50 @@
+# ---------------------------------------------------------------------------
+# Monitoring configuration: Evidently drift + model-performance degradation.
+#
+# Data drift and performance degradation are deliberately separate signals:
+# drift never implies accuracy loss. Performance gates only fire when actual
+# target values are available for the current window.
+# ---------------------------------------------------------------------------
+reference:
+  # "training_split" rebuilds the reference window from the persisted feature
+  # matrix using the same chronological split as training.
+  strategy: training_split
+  # Fallback when no reference window is available.
+  min_reference_rows: 60
+
+current:
+  # Most recent N feature rows used as the "current" window.
+  window_size: 60
+  # A performance score needs enough labelled rows to be meaningful.
+  min_rows_for_performance: 20
+
+drift:
+  evidently_preset: data_drift
+  # Share of drifted feature columns that triggers a warning / alert.
+  warning_share: 0.30
+  critical_share: 0.60
+  # Minimum share of the current window that must be present before drift is
+  # evaluated at all.
+  min_current_rows: 20
+
+performance:
+  # Degradation is relative to the champion's held-out test metrics.
+  rmse_degradation_warning_pct: 20.0
+  rmse_degradation_critical_pct: 50.0
+  mape_degradation_warning_pct: 25.0
+  mape_degradation_critical_pct: 60.0
+  # MAPE is only considered when it is actually informative: near-zero policy
+  # rates make percentage errors explode, so a low-coverage MAPE is ignored
+  # rather than reported as degradation.
+  min_mape_coverage_pct: 50.0
+
+paths:
+  reports_dir: reports/monitoring
+  status_file: reports/drift_status.json
+  latest_summary: reports/monitoring/latest_summary.json
+
+alerts:
+  # No external alerting is configured on purpose (local-only project).
+  # The monitoring pipeline records an alert row + retraining recommendation.
+  retrain_when_drift_status: critical
+  retrain_when_performance_status: critical

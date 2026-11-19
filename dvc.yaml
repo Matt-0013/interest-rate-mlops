@@ -1,0 +1,44 @@
+# ---------------------------------------------------------------------------
+# DVC pipeline.
+#
+#   dvc repro            # rebuild panel + features, retrain, re-log to MLflow
+#   dvc metrics show     # latest comparison numbers from Git-tracked metrics
+#   dvc plots show       # model comparison plot
+#
+# Reproduce the exact data a model was trained on:
+#   git checkout <commit-that-trained-it> && dvc checkout && dvc repro train
+#
+# Models are not DVC outputs: every run is stored in MLflow, which owns model
+# artifacts and lineage. DVC owns the datasets.
+# ---------------------------------------------------------------------------
+stages:
+  ingest:
+    desc: Validate the raw CSV and build the monthly modelling panel.
+    cmd: python scripts/run_pipeline.py --stage ingest --no-db
+    deps:
+      - data/raw/federal_reserve_interest_rates/index.csv
+      - configs/data.yaml
+      - src/interest_rate_mlops/ingestion
+      - src/interest_rate_mlops/validation
+      - src/interest_rate_mlops/preprocessing
+      - scripts/run_pipeline.py
+    outs:
+      - data/processed/panel.parquet
+
+  train:
+    desc: Train Linear Regression, Random Forest and XGBoost; log and register in MLflow.
+    cmd: python scripts/run_pipeline.py --stage train --no-db
+    deps:
+      - data/processed/panel.parquet
+      - configs/model.yaml
+      - src/interest_rate_mlops/features
+      - src/interest_rate_mlops/models
+      - src/interest_rate_mlops/training
+      - src/interest_rate_mlops/evaluation
+      - src/interest_rate_mlops/registry
+      - scripts/run_pipeline.py
+    outs:
+      - data/processed/features.parquet
+    metrics:
+      - reports/evaluation/latest/model_comparison.json:
+          cache: false

@@ -1,0 +1,152 @@
+{
+  "alerts": [
+    "data drift critical: 13/13 features drifted (share 1.0)",
+    "retraining recommended by the configured monitoring thresholds"
+  ],
+  "data_drift": true,
+  "drift": {
+    "dataset_drift": true,
+    "drift_share": 1.0,
+    "generated_at": "20261118T073354Z",
+    "n_current_rows": 60,
+    "n_drifted": 13,
+    "n_features": 13,
+    "n_reference_rows": 557,
+    "per_feature": {
+      "diff_1": {
+        "drift_detected": true,
+        "drift_score": 3.294236445053325e-07,
+        "stattest": "K-S p_value",
+        "threshold": null
+      },
+      "diff_12": {
+        "drift_detected": true,
+        "drift_score": 2.2353101551062305e-11,
+        "stattest": "K-S p_value",
+        "threshold": null
+      },
+      "lag_1": {
+        "drift_detected": true,
+        "drift_score": 1.236125588254434e-84,
+        "stattest": "K-S p_value",
+        "threshold": null
+      },
+      "lag_12": {
+        "drift_detected": true,
+        "drift_score": 1.236125588254434e-84,
+        "stattest": "K-S p_value",
+        "threshold": null
+      },
+      "lag_2": {
+        "drift_detected": true,
+        "drift_score": 1.236125588254434e-84,
+        "stattest": "K-S p_value",
+        "threshold": null
+      },
+      "lag_3": {
+        "drift_detected": true,
+        "drift_score": 1.236125588254434e-84,
+        "stattest": "K-S p_value",
+        "threshold": null
+      },
+      "lag_6": {
+        "drift_detected": true,
+        "drift_score": 1.236125588254434e-84,
+        "stattest": "K-S p_value",
+        "threshold": null
+      },
+      "roll_mean_12": {
+        "drift_detected": true,
+        "drift_score": 1.236125588254434e-84,
+        "stattest": "K-S p_value",
+        "threshold": null
+      },
+      "roll_mean_3": {
+        "drift_detected": true,
+        "drift_score": 1.236125588254434e-84,
+        "stattest": "K-S p_value",
+        "threshold": null
+      },
+      "roll_mean_6": {
+        "drift_detected": true,
+        "drift_score": 1.236125588254434e-84,
+        "stattest": "K-S p_value",
+        "threshold": null
+      },
+      "roll_std_12": {
+        "drift_detected": true,
+        "drift_score": 4.269416224542565e-56,
+        "stattest": "K-S p_value",
+        "threshold": null
+      },
+      "roll_std_3": {
+        "drift_detected": true,
+        "drift_score": 4.589454715497234e-37,
+        "stattest": "K-S p_value",
+        "threshold": null
+      },
+      "roll_std_6": {
+        "drift_detected": true,
+        "drift_score": 1.5422271294320162e-38,
+        "stattest": "K-S p_value",
+        "threshold": null
+      }
+    },
+    "report_path": "C:\\Users\\saiar\\Desktop\\interest-rate-mlops\\reports\\monitoring\\data_drift_20261118T073354Z.html",
+    "status": "critical",
+    "summary_path": "C:\\Users\\saiar\\Desktop\\interest-rate-mlops\\reports\\monitoring\\data_drift_20261118T073354Z.json",
+    "thresholds": {
+      "critical_share": 0.6,
+      "warning_share": 0.3
+    },
+    "warning": null
+  },
+  "drift_share": 1.0,
+  "drift_status": "critical",
+  "generated_at": "2026-11-18T07:33:57.383406+00:00",
+  "model": {
+    "alias": "champion",
+    "name": "interest_rate_forecaster",
+    "version": "1"
+  },
+  "notes": [
+    "Drift measures input feature distributions only; it does not imply that forecast accuracy degraded.",
+    "Performance is reported only over realised observations in the current window."
+  ],
+  "performance": {
+    "available": true,
+    "baseline_metrics": {
+      "mae": 0.1125038669438136,
+      "mape": 6.291618619177471,
+      "rmse": 0.1584757099118513
+    },
+    "mape_degradation_pct": null,
+    "metrics": {
+      "mae": 0.08952186136077807,
+      "mape": 8.261896797593641,
+      "mape_coverage_pct": 5.0,
+      "mean_actual": 0.1916666666666667,
+      "n_samples": 60.0,
+      "rmse": 0.09199645768378162
+    },
+    "n_actuals": 60,
+    "reason": "performance measured on realised observations in the current window; MAPE ignored for degradation: only 5.0% of the window has |actual| >= 0.5 pp (threshold 50.0%)",
+    "rmse_degradation_pct": -41.949,
+    "status": "ok",
+    "thresholds": {
+      "mape_degradation_critical_pct": 60.0,
+      "mape_degradation_warning_pct": 25.0,
+      "rmse_degradation_critical_pct": 50.0,
+      "rmse_degradation_warning_pct": 20.0
+    }
+  },
+  "performance_available": true,
+  "performance_status": "ok",
+  "retrain_recommended": true,
+  "run_id": "20261118T073357Z",
+  "status": "critical",
+  "windows": {
+    "current_rows": 60,
+    "reference_rows": 557
+  }
+}
