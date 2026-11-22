@@ -436,11 +436,19 @@ two tools. Limitations of local providers are documented in `terraform/README.md
 ## Kubernetes (minikube)
 
 ```bash
-minikube start --cpus=4 --memory=6144
+minikube start --cpus=4 --memory=4096
 python scripts/download_data.py --source kaggle
 ./kubernetes/deploy.sh          # builds in minikube's daemon, applies, seeds one pipeline run
 ./kubernetes/verify.sh          # pods, PVCs, in-cluster curl, end-to-end prediction
 ```
+
+**Host sizing.** `--memory=4096` is sized for an **8 GB host**, which is the
+common case (a Windows machine, or an 8 GB VirtualBox VM whose guest tops out
+around 6 GB). PostgreSQL, MLflow, the API, Prometheus and Grafana fit in 4 GB
+because Airflow runs outside the cluster. Do not raise `--memory` on an 8 GB
+machine: a guest configured above the host's physical RAM will not start, and
+VirtualBox reports it as a memory error rather than a cluster problem. Free RAM
+(close browsers, editors) before `minikube start` instead.
 
 Deployed: PostgreSQL, MLflow, API (1 replica, RWO volumes), Prometheus, Grafana,
 and a one-shot Job that runs ingest → train → promote → monitor in-cluster so the
@@ -537,7 +545,7 @@ not executed.
 | `dvc add` fails with `pathspec` errors | `pathspec` 1.x is incompatible with DVC 3.55; pin `pathspec==0.11.2` (already in `requirements.txt`). |
 | Airflow DAG import error | The project package is not installed in the Airflow image; use `docker/airflow.Dockerfile`, or set `PYTHONPATH=src:.`. |
 | minikube: `ImagePullBackOff` on `interest-rate-api:local` | The image was built in the host daemon, not minikube's: `eval $(minikube docker-env)` then rebuild (`deploy.sh` does this). |
-| minikube: API restarts, `postgres` not ready | Init containers wait 120 s; on a cold VM increase `--memory` and re-run `kubectl -n mlops rollout status deploy/api`. |
+| minikube: API restarts, `postgres` not ready | Init containers wait 120 s; on a cold, memory-starved host close other applications before `minikube start` (on an 8 GB machine `--memory=4096` is already the ceiling), then `kubectl -n mlops rollout status deploy/api`. |
 | Grafana panels empty | Prometheus has no target up: `kubectl -n mlops port-forward svc/prometheus 9090:9090` → `/targets`. |
 | Drift status shows `available: false` | `make monitor` has not run yet (or `reports/` is not mounted into the API container). |
 

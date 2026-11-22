@@ -50,7 +50,7 @@ duplicating them in YAML.
 
 ```bash
 # 1. cluster
-minikube start --cpus=4 --memory=6144
+minikube start --cpus=4 --memory=4096
 kubectl config use-context minikube
 
 # 2. data
@@ -62,6 +62,13 @@ python scripts/download_data.py --source kaggle
 # 4. verify
 ./kubernetes/verify.sh
 ```
+
+`--cpus=4 --memory=4096` is sized for an **8 GB host** — the common case for a
+local machine or a VirtualBox guest, which cannot be given more RAM than the
+host physically has. Do not raise `--memory` on an 8 GB machine: the VM will
+fail to start. The cluster fits in 4 GB because Airflow is deliberately not
+deployed here (see `README.md`), so close browsers and editors before
+`minikube start` if the API pods restart while waiting for PostgreSQL.
 
 `deploy.sh` builds `interest-rate-api:local` with minikube's Docker environment,
 so the image is available without a registry (`imagePullPolicy: IfNotPresent`).
@@ -87,8 +94,9 @@ kubectl -n mlops port-forward svc/prometheus 9090:9090
   gates Service endpoints, so a pod without a loaded model is never routed.
 - **Init containers** wait for `postgres:5432` and `mlflow:5000` with a bounded
   loop, which is more predictable than CrashLoopBackOff races.
-- **Resource requests/limits** are sized for a 6GB minikube VM. The Job gets the
-  largest limits because training three models is the peak workload.
+- **Resource requests/limits** are sized for a 4 GB minikube VM (the ceiling on
+  an 8 GB host). The Job gets the largest limits because training three models
+  is the peak workload.
 - **One API replica** because the artifacts volume is `ReadWriteOnce`. Horizontal
   scaling would require RWX storage or object storage; this is a deliberate
   local-only simplification, documented in the README's limitations.

@@ -8,7 +8,13 @@
 | Compose core (postgres + mlflow + api) | 2 cores | 3 GB | 5 GB |
 | Compose + observability (+ prometheus, grafana) | 3 cores | 4 GB | 6 GB |
 | Compose + orchestration (+ airflow) | 3 cores | 5 GB | 8 GB |
-| minikube (all services + pipeline job) | 4 cores | 6 GB | 10 GB |
+| minikube (all services + pipeline job) | 4 cores | 4 GB | 10 GB |
+
+`minikube start --cpus=4 --memory=4096` is the supported configuration. The 4 GB
+figure is a ceiling, not a preference: a host with 8 GB of physical RAM (the
+common laptop case, and an 8 GB VirtualBox guest) cannot back a larger minikube
+VM, and a VM configured above the host's RAM will not start. Run Compose and
+minikube one at a time on such a machine.
 
 Training the three models on the full panel takes a few seconds (LR ~0.001 s, RF
 ~0.4 s, XGB ~0.2 s); the expensive parts locally are image builds and the

@@ -7,7 +7,8 @@ deployment:
 - the `postgres-credentials` Secret (user, password, application URL, MLflow URL),
 - the shared non-secret `api-config` ConfigMap.
 
-The resource quota that keeps the stack inside a 6 GB VM is **not** managed here:
+The resource quota that keeps the stack inside a single-node local VM (4 GB of
+minikube memory on an 8 GB host) is **not** managed here:
 it lives in `kubernetes/namespace.yaml`, because the kubectl-only path
 (`kubernetes/deploy.sh`) must deploy the stack with that guard rail intact. Every
 object in this project has exactly one owner, so the quota is never defined twice.

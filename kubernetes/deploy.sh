@@ -34,7 +34,7 @@ done
   || die "raw dataset missing - run: python scripts/download_data.py --source kaggle"
 
 log "checking cluster"
-minikube status >/dev/null 2>&1 || die "minikube is not running - start it first: minikube start --cpus=4 --memory=6144"
+minikube status >/dev/null 2>&1 || die "minikube is not running - start it first: minikube start --cpus=4 --memory=4096"
 context="$(kubectl config current-context)"
 [[ "$context" == "minikube" ]] || die "kubectl context is '$context' - run: kubectl config use-context minikube"
 
