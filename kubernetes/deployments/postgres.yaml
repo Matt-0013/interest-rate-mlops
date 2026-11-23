@@ -40,16 +40,24 @@ spec:
             - name: initdb
               mountPath: /docker-entrypoint-initdb.d
               readOnly: true
+          # Socket probes rather than "pg_isready" exec probes: exec has to go
+          # through the container runtime, which costs seconds per call on a
+          # loaded node (VirtualBox + Docker-in-Docker), so a healthy database
+          # was being killed for slow probes. A dial to 5432 is served by the
+          # postgres listener itself and is cheap for the kubelet.
           readinessProbe:
-            exec:
-              command: ["sh", "-c", "pg_isready -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\""]
+            tcpSocket:
+              port: postgres
             initialDelaySeconds: 5
-            periodSeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 6
           livenessProbe:
-            exec:
-              command: ["sh", "-c", "pg_isready -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\""]
+            tcpSocket:
+              port: postgres
             initialDelaySeconds: 30
             periodSeconds: 20
+            timeoutSeconds: 3
             failureThreshold: 5
           resources:
             requests: { cpu: 100m, memory: 256Mi }

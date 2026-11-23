@@ -62,15 +62,25 @@ spec:
           volumeMounts:
             - name: artifacts
               mountPath: /mlflow/artifacts
+          # MLflow runs DB migrations on first start, which can take minutes on
+          # a slow disk; the startup probe holds liveness off until then.
+          startupProbe:
+            httpGet: { path: /health, port: http }
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 36
           readinessProbe:
             httpGet: { path: /health, port: http }
             initialDelaySeconds: 10
             periodSeconds: 10
+            # Explicit timeouts: the 1s default is not enough on a loaded node.
+            timeoutSeconds: 5
             failureThreshold: 6
           livenessProbe:
             httpGet: { path: /health, port: http }
             initialDelaySeconds: 40
             periodSeconds: 20
+            timeoutSeconds: 5
             failureThreshold: 6
           resources:
             requests: { cpu: 200m, memory: 512Mi }

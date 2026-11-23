@@ -66,10 +66,15 @@ spec:
             httpGet: { path: /api/health, port: http }
             initialDelaySeconds: 15
             periodSeconds: 10
+            # Explicit timeouts: the 1s default is not enough on a loaded node.
+            timeoutSeconds: 5
+            failureThreshold: 6
           livenessProbe:
             httpGet: { path: /api/health, port: http }
             initialDelaySeconds: 40
             periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 5
           resources:
             requests: { cpu: 100m, memory: 192Mi }
             limits: { cpu: "1", memory: 512Mi }

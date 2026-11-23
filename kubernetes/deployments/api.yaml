@@ -63,18 +63,26 @@ spec:
             - name: reports
               mountPath: /app/reports
               readOnly: true
+          # The entrypoint runs `alembic upgrade head` before uvicorn starts;
+          # the startup probe keeps liveness from killing that migration.
+          startupProbe:
+            httpGet: { path: /health, port: http }
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 36
           readinessProbe:
             httpGet: { path: /health, port: http }
             initialDelaySeconds: 10
             periodSeconds: 10
-            timeoutSeconds: 3
+            # Explicit timeouts: the 1s default is not enough on a loaded node.
+            timeoutSeconds: 5
             failureThreshold: 6
           livenessProbe:
             httpGet: { path: /health, port: http }
             initialDelaySeconds: 30
             periodSeconds: 20
-            timeoutSeconds: 3
-            failureThreshold: 3
+            timeoutSeconds: 5
+            failureThreshold: 5
           resources:
             requests: { cpu: 200m, memory: 512Mi }
             limits: { cpu: "1", memory: 1Gi }
