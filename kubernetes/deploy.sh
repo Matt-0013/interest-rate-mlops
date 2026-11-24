@@ -111,10 +111,10 @@ done
 
 log "waiting for rollouts"
 kubectl -n "$NAMESPACE" rollout status deployment/postgres --timeout=180s
-kubectl -n "$NAMESPACE" rollout status deployment/mlflow --timeout=300s
-kubectl -n "$NAMESPACE" rollout status deployment/api --timeout=300s
+kubectl -n "$NAMESPACE" rollout status deployment/mlflow --timeout=900s
+kubectl -n "$NAMESPACE" rollout status deployment/api --timeout=600s
 kubectl -n "$NAMESPACE" rollout status deployment/prometheus --timeout=180s
-kubectl -n "$NAMESPACE" rollout status deployment/grafana --timeout=180s
+kubectl -n "$NAMESPACE" rollout status deployment/grafana --timeout=600s
 
 if [[ "$SKIP_SEED" == "false" ]]; then
   log "running the pipeline once inside the cluster (ingest, train, promote, monitor)"
@@ -126,7 +126,7 @@ if [[ "$SKIP_SEED" == "false" ]]; then
   fi
   log "restarting the API so it picks up the newly registered champion"
   kubectl -n "$NAMESPACE" rollout restart deployment/api
-  kubectl -n "$NAMESPACE" rollout status deployment/api --timeout=300s
+  kubectl -n "$NAMESPACE" rollout status deployment/api --timeout=600s
 fi
 
 log "deployed"

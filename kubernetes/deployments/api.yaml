@@ -50,6 +50,12 @@ spec:
             - sh
             - -c
             - alembic upgrade head && uvicorn api.main:app --host 0.0.0.0 --port 8000
+          env:
+            # Kubernetes injects API_PORT=tcp://<cluster-ip>:8000 for the "api"
+            # Service, which Pydantic Settings would try to parse as an int.
+            # A value set here takes precedence over the injected one.
+            - name: API_PORT
+              value: "8000"
           envFrom:
             - configMapRef: { name: api-config }
             - secretRef: { name: postgres-credentials }

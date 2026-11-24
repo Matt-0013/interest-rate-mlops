@@ -62,6 +62,13 @@ spec:
               readOnly: true
             - name: data
               mountPath: /var/lib/grafana
+          # Loading plugins and migrating the SQLite state DB takes a few
+          # minutes on this node; hold liveness off until the HTTP API answers.
+          startupProbe:
+            httpGet: { path: /api/health, port: http }
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 60
           readinessProbe:
             httpGet: { path: /api/health, port: http }
             initialDelaySeconds: 15
