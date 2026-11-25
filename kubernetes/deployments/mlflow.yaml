@@ -50,6 +50,8 @@ spec:
               --backend-store-uri "$MLFLOW_BACKEND_STORE_URI"
               --artifacts-destination /mlflow/artifacts
               --serve-artifacts
+              --workers 1
+              --gunicorn-opts "--timeout 300 --graceful-timeout 60"
           env:
             - name: MLFLOW_BACKEND_STORE_URI
               valueFrom:
@@ -83,9 +85,13 @@ spec:
             periodSeconds: 20
             timeoutSeconds: 5
             failureThreshold: 6
+          # One gunicorn worker: the default of four duplicated the whole
+          # MLflow/SQLAlchemy import per worker and the OOM killer SIGKILLed
+          # them mid-run on this node. 1.5Gi leaves headroom for migrations
+          # plus an in-flight training run.
           resources:
-            requests: { cpu: 200m, memory: 512Mi }
-            limits: { cpu: "1", memory: 1Gi }
+            requests: { cpu: 200m, memory: 768Mi }
+            limits: { cpu: "1", memory: 1536Mi }
           securityContext:
             allowPrivilegeEscalation: false
             runAsNonRoot: true

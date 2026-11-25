@@ -36,14 +36,47 @@ section "persistent volume claims bound"
 unbound="$(kubectl -n "$NAMESPACE" get pvc --no-headers | awk '$2 != "Bound" {print $1}')"
 if [[ -n "$unbound" ]]; then fail "unbound PVCs: $unbound"; else echo "all PVCs bound"; fi
 
-section "in-cluster connectivity (curl pod -> api:8000)"
-if kubectl -n "$NAMESPACE" run api-curl-check --rm -i --restart=Never \
-      --image=curlimages/curl:8.10.1 --command -- \
-      curl -fsS --max-time 10 http://api:8000/health; then
-  echo
-  echo "in-cluster service reachability OK"
+# The check pod must ask for resources (mlops-quota rejects pods without
+# requests/limits) and must use an image already on the node, so the check also
+# works without registry access.
+section "in-cluster connectivity (pod -> api:8000)"
+kubectl -n "$NAMESPACE" delete pod api-curl-check --ignore-not-found >/dev/null 2>&1
+if cat <<'POD' | kubectl -n "$NAMESPACE" apply --validate=false -f - >/dev/null 2>&1
+apiVersion: v1
+kind: Pod
+metadata:
+  name: api-curl-check
+  labels:
+    app.kubernetes.io/name: api-curl-check
+spec:
+  restartPolicy: Never
+  containers:
+    - name: check
+      image: interest-rate-api:local
+      imagePullPolicy: IfNotPresent
+      command:
+        - python
+        - -c
+        - |
+          import urllib.request
+          body = urllib.request.urlopen("http://api:8000/health", timeout=10).read()
+          print(body.decode())
+      resources:
+        requests: { cpu: 50m, memory: 64Mi }
+        limits: { cpu: 200m, memory: 128Mi }
+POD
+then
+  if kubectl -n "$NAMESPACE" wait --for=jsonpath='{.status.phase}'=Succeeded \
+        pod/api-curl-check --timeout=180s >/dev/null 2>&1; then
+    kubectl -n "$NAMESPACE" logs api-curl-check
+    echo "in-cluster service reachability OK"
+  else
+    kubectl -n "$NAMESPACE" logs api-curl-check 2>&1 | tail -5
+    fail "the API was not reachable from another pod"
+  fi
+  kubectl -n "$NAMESPACE" delete pod api-curl-check --ignore-not-found >/dev/null 2>&1
 else
-  fail "the API was not reachable from another pod"
+  fail "could not create the in-cluster connectivity check pod"
 fi
 
 section "API end to end via port-forward"

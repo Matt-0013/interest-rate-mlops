@@ -28,6 +28,11 @@ spec:
         app.kubernetes.io/name: seed-pipeline
     spec:
       restartPolicy: Never
+      # The namespace holds Services named api, mlflow, postgres, prometheus and
+      # grafana, so Kubernetes injects link variables such as
+      # API_PORT=tcp://<cluster-ip>:8000 into every pod here. Settings reads
+      # API_PORT as an integer, so those injected values break startup.
+      enableServiceLinks: false
       initContainers:
         - name: wait-for-dependencies
           image: interest-rate-api:local
