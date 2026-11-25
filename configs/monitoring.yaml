@@ -6,10 +6,13 @@
 # target values are available for the current window.
 # ---------------------------------------------------------------------------
 reference:
-  # "training_split" rebuilds the reference window from the persisted feature
-  # matrix using the same chronological split as training.
+  # "training_split" uses the rows the champion was actually fitted on: the
+  # boundary is read from the split the latest training run recorded in
+  # reports/evaluation/latest/model_comparison.json, not recomputed from
+  # split.test_fraction. If that record is missing or no longer matches the
+  # persisted feature matrix, the configured chronological splitter is used.
   strategy: training_split
-  # Fallback when no reference window is available.
+  # Hard floor: below this a drift verdict is not published at all.
   min_reference_rows: 60
 
 current:
@@ -26,6 +29,13 @@ drift:
   # Minimum share of the current window that must be present before drift is
   # evaluated at all.
   min_current_rows: 20
+  # Effect-size gate: a feature counts as drifted only when the drift test
+  # rejects AND the Kolmogorov-Smirnov statistic D >= this floor. With hundreds
+  # of reference rows the p-value rejects shifts of no practical size; the floor
+  # keeps those out of drift_share without hiding real distribution change
+  # (D covers location and spread alike). 0.10 is the conventional "small"
+  # two-sample departure; set 0.0 to fall back to p-values only.
+  min_effect_size: 0.1
 
 performance:
   # Degradation is relative to the champion's held-out test metrics.

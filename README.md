@@ -49,11 +49,17 @@ with identical metrics, and the gates **rejected** it
 A promotion pipeline that cannot say "no" is not a promotion pipeline.
 
 **Monitoring on the real data:** 13/13 engineered features flagged as drifted
-(share 1.0) between the 1959–2005 reference window and the 2010–2017 window, while
-measured RMSE on realised targets was *better* than the baseline (0.0924 vs
-0.1585, −41.9%). Drift is reported as drift; accuracy is only reported from
-realised targets. MAPE degradation was suppressed (5% coverage of the window) —
-exactly the failure mode this project guards against.
+(share 1.0) between the reference window the champion was fitted on
+(1959-01…2005-06, 558 rows, read from the split the training run recorded rather
+than recomputed) and the latest 60 months (2012-02…2017-01), while measured RMSE
+on realised targets was *better* than the baseline (0.0920 vs 0.1585, −41.9%).
+Every feature clears the configured 0.10 Kolmogorov–Smirnov effect-size floor —
+the smallest is D=0.37 — so this is a real regime shift, not p-value noise: at
+the zero bound the level features are completely separated (D=1.0) and the
+monthly-change features lose almost all of their spread. Drift is reported as
+drift; accuracy is only reported from realised targets. MAPE degradation was
+suppressed (5% coverage of the window) — exactly the failure mode this project
+guards against.
 
 ---
 

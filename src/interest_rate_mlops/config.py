@@ -252,6 +252,11 @@ class DriftConfig(StrictModel):
     warning_share: float = Field(default=0.30, ge=0.0, le=1.0)
     critical_share: float = Field(default=0.60, ge=0.0, le=1.0)
     min_current_rows: int = Field(default=20, ge=2)
+    # A column is only counted as drifted when the statistical test rejects *and*
+    # the shift is material: the two-sample Kolmogorov-Smirnov statistic D must
+    # reach this value. Large windows make the p-value reject on differences of
+    # no practical size, which is what this floor prevents. 0.0 disables it.
+    min_effect_size: float = Field(default=0.10, ge=0.0, le=1.0)
 
     @model_validator(mode="after")
     def _check_ordering(self) -> DriftConfig:

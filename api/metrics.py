@@ -151,7 +151,7 @@ class FileStateCollector(Collector):
         )
         drift_detected = GaugeMetricFamily(
             "mlops_data_drift_detected",
-            "1 when Evidently reports dataset drift, else 0.",
+            "1 when the drifted-feature share reaches the configured warning share, else 0.",
         )
         performance_status = GaugeMetricFamily(
             "mlops_performance_status",

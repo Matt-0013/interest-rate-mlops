@@ -10,8 +10,12 @@ a drift alert never asserts that accuracy fell.
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field, replace
+from pathlib import Path
 from typing import Any
+
+import pandas as pd
 
 from interest_rate_mlops.config import (
     DatasetConfig,
@@ -44,6 +48,7 @@ from interest_rate_mlops.pipelines.common import (
 )
 from interest_rate_mlops.registry import ModelRegistry
 from interest_rate_mlops.storage import read_parquet, write_json
+from interest_rate_mlops.training.splits import chronological_split
 
 logger = get_logger(__name__)
 
@@ -81,6 +86,111 @@ class MonitoringOutcome:
             "db_persisted": self.db_persisted,
             "duration_seconds": round(self.duration_seconds, 3),
         }
+
+
+@dataclass(frozen=True)
+class ReferenceWindow:
+    """Reference rows plus where the boundary came from, for the status document."""
+
+    frame: pd.DataFrame
+    source: str
+    train_end: str | None = None
+    recorded_n_train: int | None = None
+
+    def describe(self) -> dict[str, Any]:
+        return {
+            "reference_rows": int(len(self.frame)),
+            "reference_source": self.source,
+            "reference_train_end": self.train_end,
+        }
+
+
+def _recorded_training_split(settings: Settings) -> dict[str, Any] | None:
+    """Read the split the latest training run actually recorded."""
+    path = Path(settings.reports_path) / "evaluation" / "latest" / "model_comparison.json"
+    if not path.exists():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        logger.warning(
+            "recorded training split at %s is unreadable (%s); recomputing it",
+            path,
+            exc,
+            extra={"event": "split_record_unreadable"},
+        )
+        return None
+    split = payload.get("split") if isinstance(payload, dict) else None
+    if not isinstance(split, dict) or not split.get("train_end"):
+        return None
+    return split
+
+
+def _date_bounds(frame: pd.DataFrame) -> tuple[str | None, str | None]:
+    if len(frame) == 0 or not isinstance(frame.index, pd.DatetimeIndex):
+        return None, None
+    return str(frame.index[0].date()), str(frame.index[-1].date())
+
+
+def resolve_reference_window(
+    features: pd.DataFrame,
+    pipeline_cfg: PipelineConfig,
+    monitoring_cfg: MonitoringConfig,
+    settings: Settings,
+) -> ReferenceWindow:
+    """Reference window = exactly the rows the champion was fitted on.
+
+    The training run records its split in ``reports/evaluation/latest/
+    model_comparison.json``; that boundary is authoritative. Recomputing it from
+    ``split.test_fraction`` drifts by a row as soon as the rounding changes, and
+    silently includes or excludes a holdout month. Only when the record is
+    missing or no longer describes the persisted matrix does this fall back to
+    the splitter training itself uses.
+    """
+    index = features.index
+    if not isinstance(index, pd.DatetimeIndex):
+        index = pd.DatetimeIndex(pd.to_datetime(index))
+    min_rows = monitoring_cfg.reference.min_reference_rows
+
+    record = _recorded_training_split(settings)
+    if record is not None:
+        train_end = str(record["train_end"])
+        recorded_n = record.get("n_train")
+        try:
+            n_rows = int((index <= pd.Timestamp(train_end)).sum())
+        except (TypeError, ValueError) as exc:
+            logger.warning(
+                "recorded train_end %r is not a usable date (%s); recomputing the split",
+                train_end,
+                exc,
+                extra={"event": "split_record_invalid"},
+            )
+        else:
+            consistent = recorded_n is None or int(recorded_n) == n_rows
+            if consistent and min_rows <= n_rows < len(features):
+                return ReferenceWindow(
+                    frame=features.iloc[:n_rows],
+                    source="recorded_split",
+                    train_end=train_end,
+                    recorded_n_train=None if recorded_n is None else int(recorded_n),
+                )
+            logger.warning(
+                "recorded split does not describe the persisted feature matrix "
+                "(train_end=%s gives %s rows, recorded n_train=%s, matrix has %s rows); "
+                "falling back to the configured chronological split",
+                train_end,
+                n_rows,
+                recorded_n,
+                len(features),
+                extra={"event": "split_record_mismatch"},
+            )
+
+    split = chronological_split(index, pipeline_cfg.split)
+    return ReferenceWindow(
+        frame=features.iloc[: split.n_train],
+        source="chronological_split",
+        train_end=split.train_end,
+    )
 
 
 def _load_champion(
@@ -133,9 +243,12 @@ def run_monitoring(
             "retrain so features and monitoring agree"
         )
 
-    training_rows = int(len(features) * (1.0 - pipeline_cfg.split.test_fraction))
-    reference = features.iloc[: max(training_rows, monitoring_cfg.reference.min_reference_rows)]
+    reference_window = resolve_reference_window(
+        features, pipeline_cfg, monitoring_cfg, settings
+    )
+    reference = reference_window.frame
     current = features.iloc[-monitoring_cfg.current.window_size :]
+    current_start, current_end = _date_bounds(current)
 
     with Timer() as timer:
         alerts: list[str] = []
@@ -203,13 +316,17 @@ def run_monitoring(
             "performance": performance.as_dict(),
             "alerts": alerts,
             "windows": {
-                "reference_rows": int(len(reference)),
+                **reference_window.describe(),
                 "current_rows": int(len(current)),
+                "current_start": current_start,
+                "current_end": current_end,
             },
             "notes": [
                 "Drift measures input feature distributions only; it does not imply "
                 "that forecast accuracy degraded.",
                 "Performance is reported only over realised observations in the current window.",
+                "A feature counts as drifted only when the drift test rejects and the "
+                "Kolmogorov-Smirnov effect size reaches drift.min_effect_size.",
             ],
         }
         status_path = write_json(monitoring_cfg.paths.status_path, status_document)
