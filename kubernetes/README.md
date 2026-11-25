@@ -37,6 +37,7 @@ kubernetes/
 ├── services/api.yaml
 ├── jobs/seed-pipeline.yaml     # one pipeline run inside the cluster
 ├── deploy.sh                   # build, generate config, apply, seed
+├── node-recovery.sh            # repair a cluster booted with `docker start`
 └── verify.sh                   # cluster + API verification
 ```
 
@@ -74,6 +75,40 @@ deployed here (see `README.md`), so close browsers and editors before
 so the image is available without a registry (`imagePullPolicy: IfNotPresent`).
 Postgres/Prometheus/Grafana images are pulled from Docker Hub and therefore need
 internet access inside the VM.
+
+## After a host reboot
+
+`minikube start` configures the node itself, so the normal path needs nothing
+extra. The problem case is a host (or VirtualBox guest) reboot that leaves the
+container stopped by the host: the cluster is then resumed with
+`docker start minikube`, and the container entrypoint does **not** re-apply the
+prerequisites `minikube start` had set up. The cluster reports `Running` but is
+unusable, in three independent ways:
+
+| Missing prerequisite | Symptom |
+| --- | --- |
+| `control-plane.minikube.internal` in the container's `/etc/hosts` (Docker rewrites that file on start) | kube-proxy cannot resolve its kubeconfig server, crashloops, and takes Service networking with it: CoreDNS never becomes Ready, every ClusterIP times out |
+| the `br_netfilter` module plus `bridge-nf-call-iptables=1` | pod → ClusterIP traffic is never DNAT'ed to an endpoint; in-cluster DNS and database connections hang |
+| kubelet started by the container entrypoint | no node, so pods are never scheduled |
+
+```bash
+./kubernetes/node-recovery.sh
+```
+
+It restores all three idempotently (re-pinning the hosts entry instead of
+appending to it, so a stale IP from a previous run cannot win) and then
+*verifies* each one, waiting up to 60 s for the apiserver. Exit status is
+non-zero if anything could not be restored. `deploy.sh` runs it automatically
+when the minikube container is already up, so a redeploy after a reboot needs no
+manual step.
+
+If kube-proxy had already crashlooped before the repair, restart it once the
+apiserver answers:
+
+```bash
+kubectl -n kube-system rollout restart ds/kube-proxy
+kubectl -n mlops rollout status deploy/postgres --timeout=300s
+```
 
 ## Inspect
 

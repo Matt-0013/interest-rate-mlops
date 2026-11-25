@@ -33,6 +33,14 @@ done
 [[ -f data/raw/federal_reserve_interest_rates/index.csv ]] \
   || die "raw dataset missing - run: python scripts/download_data.py --source kaggle"
 
+# A container that was brought back with `docker start` (guest reboot) is
+# missing the node prerequisites minikube's entrypoint normally sets up; repair
+# them before anything depends on Service networking.
+if [[ "$(docker inspect -f '{{.State.Running}}' minikube 2>/dev/null || true)" == "true" ]]; then
+  log "restoring node prerequisites (post-reboot recovery)"
+  "$ROOT/kubernetes/node-recovery.sh" || die "node recovery failed - see the output above"
+fi
+
 log "checking cluster"
 minikube status >/dev/null 2>&1 || die "minikube is not running - start it first: minikube start --cpus=4 --memory=4096"
 context="$(kubectl config current-context)"
